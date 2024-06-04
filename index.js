@@ -39,7 +39,7 @@ let rooms = [{
    "roomID": "2",
    "bookingID": "1",
    "bookingdate":"20/06/2023",
-   "bookingStatus":"completed",
+   "bookingStatus":"completed"
   }]
  }, {
   "name": "Movie Theater", 
@@ -55,7 +55,7 @@ let rooms = [{
    "roomID": "3",
    "bookingID": "1",
    "bookingdate":"02/06/2023",
-   "bookingStatus":"booked",
+   "bookingStatus":"booked"
   }]
 }, {
     "name": "conference hall", 
@@ -71,7 +71,7 @@ let rooms = [{
      "roomID": "4",
      "bookingID": "1",
      "bookingdate":"02/06/2024",
-     "bookingStatus":"booked",
+     "bookingStatus":"booked"
     }]
 },
     {
@@ -88,7 +88,7 @@ let rooms = [{
      "roomID": "4",
      "bookingID": "1",
      "bookingdate":"02/06/2024",
-     "bookingStatus":"booked",
+     "bookingStatus":"booked"
     }]
  }]
 
@@ -195,12 +195,12 @@ app.get("/customerHowmanytimes", (req, res) => {
                     bookingdata: data.bookingdate,
                     bookingStatus: data.bookingStatus,
                     }
-                customers.push(customer)
+                details.push(customer)
             }
         })
      }
     })
-   res.send(customers)
+   res.send(details)
    })
    
 
