@@ -1,142 +1,209 @@
-import express from "express"
-import { MongoClient } from "mongodb"
+import express from 'express';
+import dotenv from 'dotenv';
 
 
-import * as dotenv from 'dotenv'
-dotenv.config()
-
+dotenv.config();
+const PORT = 8000;
 const app = express()
-const PORT = 5000
-
 app.use(express.json())
 
- 
 
-const MONGO_URL = process.env.MONGO_URL
-// 'mongodb://127.0.0.1:27017'
-//'mongodb://localhost:27017';
 
-async function createConnection() {
-    const client = new MongoClient(MONGO_URL);
-    await client.connect()
-    console.log("Mongodb is connected")
-    return client
-}
+let rooms = [{
+ "name": "Classroom",
+ "seats": "50", 
+ "amenities": "air conditioning, 10 tables, 40 chairs, whiteboard, projector",
+ "pricefor1hr": "$300",
+ "roomID": "1",
+ "bookedData": [{
+  "customerName": "Athistaraja", 
+  "date": "26/06/2023",
+  "startTime": "09:30", 
+  "endTime": "10:30", 
+  "bookingID": "1",
+  "bookingdate":"20/06/2023",
+  "bookingStatus":"booked"
+ }]
+},
+ {
+  "name": "Function Hall", 
+  "seats": "200", 
+  "amenities": "stage,air conditioning,10 round tables, 150 chairs", 
+  "pricefor1hr": "$1000",
+  "roomID": "2",
+  "bookedData": [{
+   "customerName": "jeyaram", 
+   "date": "25/06/2023",
+   "startTime": "11:30", 
+   "endTime": "14:30", 
+   "roomID": "2",
+   "bookingID": "1",
+   "bookingdate":"20/06/2023",
+   "bookingStatus":"completed",
+  }]
+ }, {
+  "name": "Movie Theater", 
+  "seats": "100", 
+  "amenities": "big screen, air conditioning, popcorn, projecter, premium seats",
+  "pricefor1hr": "$500",
+   "roomID": "3",
+  "bookedData": [{
+   "customerName": "Raja",
+   "date": "24/06/2023",
+   "startTime": "19:30", 
+   "endTime": "22:30", 
+   "roomID": "3",
+   "bookingID": "1",
+   "bookingdate":"02/06/2023",
+   "bookingStatus":"booked",
+  }]
+}, {
+    "name": "conference hall", 
+    "seats": "100", 
+    "amenities": " air conditioning, projecter, Round Table",
+    "pricefor1hr": "$500",
+     "roomID": "4",
+    "bookedData": [{
+     "customerName": "Lucky",
+     "date": "24/06/2024",
+     "startTime": "19:30", 
+     "endTime": "22:30", 
+     "roomID": "4",
+     "bookingID": "1",
+     "bookingdate":"02/06/2024",
+     "bookingStatus":"booked",
+    }]
+},
+    {
+    "name": "conference hall", 
+    "seats": "100", 
+    "amenities": " air conditioning, projecter, Round Table",
+    "pricefor1hr": "$500",
+     "roomID": "4",
+    "bookedData": [{
+     "customerName": "Lucky",
+     "date": "24/06/2024",
+     "startTime": "19:30", 
+     "endTime": "22:30", 
+     "roomID": "4",
+     "bookingID": "1",
+     "bookingdate":"02/06/2024",
+     "bookingStatus":"booked",
+    }]
+ }]
 
-export const client = await createConnection()
+ app.get("/", (req , res)=> {
+  res.status(400).send("welcome to Hall Booking API")
+ })
 
-app.get('/', (req, res) => {
-    res.send('Welcome to Hall Booking API')
+
+// 1 Creating a room with 'number of seats','amenities in room', 'Price for 1 hr'
+app.post("/makeroom", (req, res) => {
+
+    const newroom = {
+        name: req.body.name, 
+        seats: req.body.seats, 
+        amenities: req.body.amenities, 
+        price: req.body.price, 
+        roomID: req.body.roomID,
+        bookedData:[]
+    }
+rooms = [...rooms, newroom]
+res.send({message:"Room has been created",created:true})
+
 })
 
-// -------------------------------------------------------------------------------------
-//  Hall details
-app.get("/hallDetails", async function (req, res) {
-  const result = await client
-    .db("B53WD")
-    .collection("hallData")
-    .find({})
-    .toArray();
-  res.send(result);
-});
-// -------------------------------------------------------------------------------------
-// Creating new hall
-app.post("/createHall", async function (req, res) {
-  const data = req.body;
-  const result = await client
-    .db("B53WD")
-    .collection("hallData")
-    .insertMany(data);
-  res.send(result);
-});
-// --------------------------------------------------------------------------------------
-// Booking a room
-app.put("/hallBooking/:id", async function (req, res) {
-  const { id } = req.params;
-  const data = req.body;
-  const hall = await client
-    .db("B53WD")
-    .collection("hallData")
-    .findOne({ _id: new ObjectId(id) })
-  console.log(hall);
-  if (hall.ifBooked === "true") {
-    res.send({ message: "Hall already booked" });
-  } else {
-    const result = await client
-      .db("B53WD")
-      .collection("hallData")
-      .updateOne({ _id: new ObjectId(id) }, { $set: data });
-    res.send(result);
+
+// 2 Booking a room with ...
+app.post("/bookroom",(req, res)=> {
+
+    let bookedData = {
+        customerName: req.body.customerName, 
+        date: req.body.date, 
+        startTime: req.body.startTime, 
+        endTime: req.body.endTime, 
+        roomID: req.body.roomID,
+        bookingdata:req.body.bookingdate,
+        bookingStatus:req.body.bookingStatus,
+    }
+
+ for (let i = 0; i < rooms.length;i++) {
+     if (rooms[i].roomID === bookedData.roomID) {
+        bookedData.bookingID = rooms[i].bookedData.length + 1;
+        rooms[i].bookedData.push(bookedData)
+        return res.send({ message: "Booking has been confirmed", booked:true})
+        }
+    }
+ })
+
+//3 List all rooms with booked data with ...    
+app.get("/roomswithBookedData",(req,res)=>{
+let bookedrooms = []
+rooms.map((room)=>{
+    if(room.bookedData.length !== 0){
+        bookedrooms.push(room)
+    }
+})
+
+res.send(bookedrooms)
+})
+
+
+// 4 List all customers with booked data(room name included)
+app.get("/customerswithBookedData", (req, res) => {
+
+ let customers = []
+ 
+ rooms.map((room) => {
+  if(room.bookedData.length != 0){
+    room.bookedData.map((data)=>{
+        let customer = {
+            customerName:data.customerName,
+            roomName: room.name,
+            date: data.date,
+            startTime: data.startTime,
+            endTime: data.endTime,
+            }
+        customers.push(customer)
+    })
   }
-});
-// ---------------------------------------------------------------------------------------
-// List all rooms with booked data
-app.get("/bookedHalls", async function (req, res) {
-  const result = await client
-    .db("B53WD")
-    .collection("hallData")
-    .find({ ifBooked: "true" })
-    .project({
-      id: 1,
-      roomId: 1,
-      roomName: 1,
-      customerName: 1,
-      amenities: 1,
-      noOfSeats: 1,
-      price: 1,
-      bookingStatus: 1,
+ })
+res.send(customers)
+})
+
+
+// 5 List how many times a specifc customer has booked a specific room with details ...
+
+app.get("/customerHowmanytimes", (req, res) => {
+
+    const customerName = req.body.customerName
+    const roomName = req.body.roomName
+
+    let details = []
+    
+    rooms.map((room) => {
+     if(room.name == roomName){
+        room.bookedData.map((data)=>{
+            if(data.customerName == customerName){
+                let customer = {
+                    customerName:customerName,
+                    roomName: roomName,
+                    date: data.date,
+                    startTime: data.startTime,
+                    endTime: data.endTime,
+                    bookingID: data.bookingID,
+                    bookingdata: data.bookingdate,
+                    bookingStatus: data.bookingStatus,
+                    }
+                customers.push(customer)
+            }
+        })
+     }
     })
-    .toArray();
-  res.send(result);
-});
-// ---------------------------------------------------------------------------------------
-// List all customers with booked data
-app.get("/bookedCustomers", async function (req, res) {
-  const result = await client
-    .db("B53WD")
-    .collection("hallData")
-    .find({ ifBooked: "true" })
-    .project({
-      id: 1,
-      customerName: 1,
-      roomName: 1,
-      date: 1,
-      startTime: 1,
-      endTime: 1,
-    })
-    .toArray();
-  res.send(result);
-});
-// ---------------------------------------------------------------------------------------
-// List how many times a customer has booked the room
-app.get("/noOfTimes", async function (req, res) {
-  const result = await client
-    .db("B53WD")
-    .collection("hallData")
-    .aggregate([
-      { $group: { _id: "$customerName", count: { $sum: 1 } } },
-      { $match: { _id: { $ne: null }, count: { $gt: 1 } } },
-    ])
-    .toArray();
-  console.log(result);
-  const finalResult = await client
-    .db("B53WD")
-    .collection("hallData")
-    .find({ customerName: result[0]._id })
-    .project({
-      id: 1,
-      customerName: 1,
-      roomName: 1,
-      date: 1,
-      startTime: 1,
-      endTime: 1,
-      bookingStatus: 1,
-    })
-    .toArray();
-  res.send(finalResult);
-});
+   res.send(customers)
+   })
+   
 
 
-
-
-app.listen(PORT, () => console.log(`Server started on the PORT, ${PORT}`))
+app.listen(PORT,()=>{
+    console.log(`Server is running ${PORT}`)})
